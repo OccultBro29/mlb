@@ -23,10 +23,10 @@
   body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
   header { background: #241442; color: white; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-  .header-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  .header-inner { max-width: 1200px; margin: 0 auto; padding: 21px 16px; display: flex; align-items: center; gap: 16px; }
   .mlb-logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: white; text-decoration: none; }
   .mlb-logo span { color: #d50032; }
-  .header-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 16px; }
+  .header-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;  }
 
   .page-container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
 
@@ -35,12 +35,14 @@
   .date-badge { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-top: 3px; }
 
   /* Date navigator */
-  .date-nav { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 8px; overflow: visible; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+  .date-nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 8px; overflow: visible; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
   .date-nav-btn { background: none; border: none; padding: 10px 14px; cursor: pointer; color: var(--navy); display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
   .date-nav-btn:hover { background: #f0ecf8; }
   .date-nav-btn:active { background: #ddd6f0; }
 
-  .date-nav-wrapper { position: relative; }
   .date-nav-label {
     padding: 10px 18px;
     font-size: 15px;
@@ -48,7 +50,7 @@
     color: var(--navy);
     border-left: 1.5px solid var(--border);
     border-right: 1.5px solid var(--border);
-    min-width: 220px;
+    width: 280px;
     text-align: center;
     white-space: nowrap;
     cursor: pointer;
@@ -57,24 +59,7 @@
   }
   .date-nav-label:hover { background: #f0ecf8; }
 
-  /* Calendar dropdown */
-  .cal-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    z-index: 999;
-    padding: 16px;
-    width: 300px;
-  }
-  .cal-dropdown.open { display: block; }
-
-
+  
   .calendar-dropdown {
     display: none;
     position: fixed;
@@ -84,7 +69,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.18);
     z-index: 9999;
     padding: 16px;
-    width: 300px;
+    width: 280px;
   }
 
   .calendar-dropdown.open {
@@ -93,7 +78,7 @@
 
   .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .cal-month-label { font-size: 15px; font-weight: 700; color: var(--navy); }
-  .cal-nav { background: none; border: none; cursor: pointer; color: var(--navy); padding: 5px 8px; border-radius: 6px; display: flex; align-items: center; transition: background 0.12s; }
+  .cal-nav { background: none; border: none; cursor: pointer; color: var(--navy); padding: 4px 6px; border-radius: 6px; display: flex; align-items: center; transition: background 0.12s; }
   .cal-nav:hover { background: #f0ecf8; }
 
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -138,23 +123,56 @@
   .game-status-pill.live { background: #d50032; }
   .game-status-pill.final { background: rgba(255,255,255,0.15); }
 
-  .pitchers-row { display: grid; grid-template-columns: 1fr 1fr; background: #f8fafc; border-bottom: 1px solid var(--border); }
-  .pitcher-cell { padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
-  .pitcher-cell + .pitcher-cell { border-left: 1px solid var(--border); }
-  .pitcher-photo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); background: #e5e7eb; flex-shrink: 0; }
+  .pitcher-cell {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pitcher-cell + .pitcher-cell {
+    border-left: 1px solid var(--border);
+  }
+
+  .pitcher-photo {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    background: #e5e7eb;
+    flex-shrink: 0;
+  }
+
   .pitcher-info { min-width: 0; }
-  .pitcher-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .pitcher-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .pitcher-name a { color: inherit; text-decoration: none; }
   .pitcher-name a:hover { color: var(--navy); text-decoration: underline; }
-  .pitcher-stats { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 
+  .pitcher-stats-line {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+
+  .pitchers-row { display: grid; grid-template-columns: 1fr 1fr; background: #f8fafc; border-bottom: 1px solid var(--border); }
   .lineups-row { display: grid; grid-template-columns: 1fr 1fr; }
   .lineup-col { padding: 12px 14px; }
   .lineup-col + .lineup-col { border-left: 1px solid var(--border); }
   .lineup-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
   .lineup-label img { width: 18px; height: 18px; object-fit: contain; }
   .lineup-list { list-style: none; }
-  .lineup-player { display: flex; align-items: baseline; gap: 6px; padding: 4px 0; border-bottom: 1px solid #f3f4f6; font-size: 12.5px; line-height: 1.4; }
+  .lineup-player { display: flex; align-items: center; gap: 4px; padding: 4px 0; border-bottom: 1px solid #f3f4f6; font-size: 12.5px; line-height: 1.4; }
   .lineup-player:last-child { border-bottom: none; }
   .batting-order { color: var(--text-light); font-size: 11px; font-weight: 600; min-width: 14px; flex-shrink: 0; }
   .jersey-num { color: var(--number-color); font-size: 12px; font-weight: 800; min-width: 22px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
@@ -162,9 +180,106 @@
   .player-name-link:hover { color: var(--navy); text-decoration: underline; }
   .player-hand { color: var(--text-light); font-size: 10px; flex-shrink: 0; }
   .player-pos { color: var(--text-muted); font-size: 11px; font-weight: 600; flex-shrink: 0; min-width: 26px; text-align: right; }
+
+  .player-stats-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .stat-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+    font-size: 9px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-frac .numer {
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 1px solid var(--text-muted);
+    width: 100%;
+    text-align: center;
+    padding-bottom: 1px;
+  }
+
+  .stat-frac .denom {
+    color: var(--text-light);
+    padding-top: 1px;
+  }
+
+  .pitcher-stats-line {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+
+
+  .player-name-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .player-tooltip {
+    display: none;
+    position: fixed;
+    background: #241442;
+    color: white;
+    border-radius: 7px;
+    padding: 4px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    gap: 8px;
+    align-items: center;
+  }
+
+  .player-tooltip.visible {
+    display: flex;
+  }
+
+  .tooltip-dob {
+    opacity: 0.85;
+  }
+
+  .tooltip-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+    font-size: 10px;
+  }
+
+  .tooltip-frac .tn {
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.5);
+    width: 100%;
+    text-align: center;
+    padding-bottom: 1px;
+    opacity: 0.85;
+  }
+
+  .tooltip-frac .td {
+    opacity: 0.85;
+    padding-top: 1px;
+  }
+
   .tbd-lineup { color: var(--text-light); font-style: italic; font-size: 12px; padding: 8px 0; text-align: center; }
 
-  .game-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); background: #fafbfc; }
+  .game-footer { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); background: #fafbfc; }
   .game-footer a { font-size: 12px; font-weight: 600; color: var(--navy); text-decoration: none; padding: 5px 12px; border: 1px solid var(--border); border-radius: 5px; transition: background 0.1s; }
   .game-footer a:hover { background: #f0ecf8; }
   .game-footer a.primary { background: #241442; color: white; border-color: #241442; }
@@ -184,8 +299,7 @@
 
 <header>
   <div class="header-inner">
-    <a class="mlb-logo" href="https://www.mlb.com"><span>M</span>LB</a>
-    <span class="header-title">Starting Lineups</span>
+    
   </div>
 </header>
 
@@ -194,6 +308,7 @@
     <div>
       <h1 class="page-title">Starting Lineups</h1>
       <div class="date-badge" id="date-subtitle"></div>
+      <div class="note-bar" style="margin-top:4px;">All times Pacific &nbsp;|&nbsp; AB &nbsp;Hits &nbsp;HR</div>
     </div>
     <div class="date-nav">
       <button class="date-nav-btn" onclick="changeDate(-1)" title="Previous day">
@@ -217,13 +332,13 @@
     </div>
   </div>
 
-  <div class="note-bar">All times Pacific. Subject to change. &nbsp;|&nbsp; <span>#</span> = Jersey number</div>
-  <div class="status-bar" id="status-bar"></div>
-
-  <div class="filter-bar">
-    <select id="team-filter" onchange="filterGames()">
-      <option value="all">All Teams</option>
-    </select>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div class="filter-bar" style="margin-bottom:0;">
+      <select id="team-filter" onchange="filterGames()">
+        <option value="all">All Teams</option>
+      </select>
+    </div>
+    <div class="status-bar" id="status-bar" style="margin-bottom:0;text-align:right;"></div>
   </div>
 
   <div class="games-grid" id="games-grid">
@@ -471,13 +586,19 @@ async function buildGameCard(g) {
 
   const pitcherCell = async (pitcher, teamId) => {
     if (!pitcher) return `<div class="pitcher-cell"><div style="font-size:12px;color:#9ca3af;font-style:italic">TBD</div></div>`;
-    const num = await getPlayerJerseyNum(pitcher.id);
+    const [num, pStats] = await Promise.all([
+      getPlayerJerseyNum(pitcher.id),
+      fetchPitcherStats(pitcher.id)
+    ]);
+    const statsLine = pStats
+      ? `${pStats.w}-${pStats.l}, ${pStats.era} ERA, ${pStats.so} SO`
+      : (pitcher.note || 'SP');
     return `
       <div class="pitcher-cell">
         <img class="pitcher-photo" src="https://content.mlb.com/images/headshots/current/60x60/${pitcher.id}@3x.png" onerror="this.src='https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pitcher.id}/headshot/67/current'" alt="${pitcher.fullName}">
         <div class="pitcher-info">
-          <div class="pitcher-name"><a href="https://www.mlb.com/player/${pitcher.id}" target="_blank">#${num} ${pitcher.fullName}</a></div>
-          <div class="pitcher-stats">${pitcher.note || (pitcher.stats?.pitching ? `${pitcher.stats.pitching.era || ''} ERA` : 'P')}</div>
+          <div class="pitcher-name"><a href="https://www.mlb.com/player/${pitcher.id}" target="_blank" onmouseenter="fetchPlayerBio(${pitcher.id}).then(()=>showTooltip(this,${pitcher.id},true))" onmouseleave="hideTooltip()">#${num} ${pitcher.fullName}</a></div>
+          <div class="pitcher-stats-line">${statsLine}</div>
         </div>
       </div>`;
   };
@@ -485,15 +606,22 @@ async function buildGameCard(g) {
   const buildLineup = async (players) => {
     if (!players.length) return `<div class="tbd-lineup">Lineup not yet available</div>`;
     const rows = await Promise.all(players.map(async (p, i) => {
-      const num = await getPlayerJerseyNum(p.id);
+      const [num, stats] = await Promise.all([
+        getPlayerJerseyNum(p.id),
+        fetchBatterStats(p.id)
+      ]);
       const pos = p.primaryPosition?.abbreviation || p.position?.abbreviation || '';
       const hand = p.batSide?.code || p.bats || '';
       const name = p.fullName || p.lastFirstName || 'Unknown';
+      const statsHtml = stats ? `<span class="player-stats-inline">${fracHTML(stats.sAB,stats.cAB,'AB')}${fracHTML(stats.sH,stats.cH,'H')}${fracHTML(stats.sHR,stats.cHR,'HR')}</span>` : '';
       return `<li class="lineup-player">
         <span class="batting-order">${i+1}.</span>
         <span class="jersey-num">#${num}</span>
-        <a class="player-name-link" href="https://www.mlb.com/player/${p.id}" target="_blank">${name}</a>
+        <a class="player-name-link" href="https://www.mlb.com/player/${p.id}" target="_blank"
+          onmouseenter="fetchPlayerBio(${p.id}).then(()=>showTooltip(this,${p.id}))"
+          onmouseleave="hideTooltip()">${name}</a>
         ${hand ? `<span class="player-hand">(${hand})</span>` : ''}
+        ${statsHtml}
         <span class="player-pos">${pos}</span>
       </li>`;
     }));
@@ -557,6 +685,114 @@ async function buildGameCard(g) {
     <a class="primary" href="https://www.mlb.com/scores" target="_blank">Scores</a>
   </div>
 </div>`;
+}
+
+
+// ── Player Stats ──────────────────────────────────────────
+let playerStatsCache = {};
+
+async function fetchBatterStats(playerId) {
+  if (playerStatsCache[playerId] !== undefined) return playerStatsCache[playerId];
+  try {
+    const url = `${MLB_API}/people/${playerId}/stats?stats=season,career&group=hitting&season=${new Date().getFullYear()}`;
+    const d = await fetchWithFallback(url);
+    const stats = d.stats || [];
+    const season = stats.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
+    const career = stats.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat || {};
+    const result = {
+      sG:  season.gamesPlayed || 0, cG:  career.gamesPlayed || 0,
+      sAB: season.atBats || 0,      cAB: career.atBats || 0,
+      sH:  season.hits || 0,        cH:  career.hits || 0,
+      sHR: season.homeRuns || 0,    cHR: career.homeRuns || 0,
+    };
+    playerStatsCache[playerId] = result;
+    return result;
+  } catch {
+    playerStatsCache[playerId] = null;
+    return null;
+  }
+}
+
+async function fetchPitcherStats(playerId) {
+  const key = 'p_' + playerId;
+  if (playerStatsCache[key] !== undefined) return playerStatsCache[key];
+  try {
+    const url = `${MLB_API}/people/${playerId}/stats?stats=season&group=pitching&season=${new Date().getFullYear()}`;
+    const d = await fetchWithFallback(url);
+    const stat = d.stats?.[0]?.splits?.[0]?.stat || {};
+    const result = {
+      w: stat.wins ?? '—',
+      l: stat.losses ?? '—',
+      era: stat.era != null ? parseFloat(stat.era).toFixed(2) : '—',
+      so: stat.strikeOuts ?? '—',
+    };
+    playerStatsCache[key] = result;
+    return result;
+  } catch {
+    playerStatsCache[key] = null;
+    return null;
+  }
+}
+
+function fracHTML(numer, denom, label) {
+  return `<span class="stat-frac">
+    <span class="numer">${numer}</span>
+    <span class="denom">${denom}</span>
+  </span>`;
+}
+
+
+// ── Player Bio (tooltip) ──────────────────────────────────
+let playerBioCache = {};
+
+async function fetchPlayerBio(playerId) {
+  if (playerBioCache[playerId] !== undefined) return playerBioCache[playerId];
+  try {
+    const d = await fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season,career&group=hitting&season=${new Date().getFullYear()}&fields=stats,type,displayName,splits,stat,gamesPlayed`);
+    const bioD = await fetchWithFallback(`${MLB_API}/people/${playerId}?fields=people,id,birthDate`);
+    const person = bioD.people?.[0] || {};
+    const dob = person.birthDate || null;
+    // Extract games played for pitchers who won't have batter stats cached
+    const stats = d.stats || [];
+    const season = stats.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
+    const career = stats.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat || {};
+    playerBioCache[playerId] = { dob, sG: season.gamesPlayed || 0, cG: career.gamesPlayed || 0 };
+    return playerBioCache[playerId];
+  } catch {
+    playerBioCache[playerId] = null;
+    return null;
+  }
+}
+
+function formatDOB(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${m}/${d}/${y}`;
+}
+
+function showTooltip(el, playerId, dobOnly) {
+  const tip = document.getElementById('player-tooltip');
+  const bio = playerBioCache[playerId];
+  const stats = playerStatsCache[playerId];
+
+  const dobStr = bio?.dob ? formatDOB(bio.dob) : '—';
+  const sG = stats?.sG ?? bio?.sG ?? '—';
+  const cG = stats?.cG ?? bio?.cG ?? '—';
+
+  tip.innerHTML = dobOnly
+    ? `<span class="tooltip-dob">${dobStr}</span>`
+    : `<span class="tooltip-dob">${dobStr}</span><span class="tooltip-frac"><span class="tn">${sG}</span><span class="td">${cG}</span></span>`;
+
+  const rect = el.getBoundingClientRect();
+  tip.style.left = rect.left + 'px';
+  tip.style.top = '-9999px';
+  tip.classList.add('visible');
+  const tipH = tip.getBoundingClientRect().height;
+  tip.style.top = (rect.top - tipH - 4) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('player-tooltip').classList.remove('visible');
 }
 
 // ── Calendar ──────────────────────────────────────────────
@@ -635,5 +871,6 @@ function renderCalendar() {
 }
 </script>
 <div class="calendar-dropdown" id="calendar-dropdown"></div>
+<div class="player-tooltip" id="player-tooltip"></div>
 </body>
 </html>
