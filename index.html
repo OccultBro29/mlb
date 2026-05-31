@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB Starting Lineups</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #241442;
+    --red: #d50032;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e1e4e8;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --accent: #241442;
+    --number-color: #241442;
+  }
+
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header { background: #241442; color: white; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .header-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  .mlb-logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: white; text-decoration: none; }
+  .mlb-logo span { color: #d50032; }
+  .header-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 16px; }
+
+  .page-container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 28px; font-weight: 800; color: var(--navy); letter-spacing: -0.5px; }
+  .date-badge { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-top: 3px; }
+
+  /* Date navigator */
+  .date-nav { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 8px; overflow: visible; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+  .date-nav-btn { background: none; border: none; padding: 10px 14px; cursor: pointer; color: var(--navy); display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+  .date-nav-btn:hover { background: #f0ecf8; }
+  .date-nav-btn:active { background: #ddd6f0; }
+
+  .date-nav-wrapper { position: relative; }
+  .date-nav-label {
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    border-left: 1.5px solid var(--border);
+    border-right: 1.5px solid var(--border);
+    min-width: 220px;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .date-nav-label:hover { background: #f0ecf8; }
+
+  /* Calendar dropdown */
+  .cal-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    z-index: 999;
+    padding: 16px;
+    width: 300px;
+  }
+  .cal-dropdown.open { display: block; }
+
+
+  .calendar-dropdown {
+    display: none;
+    position: fixed;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    z-index: 9999;
+    padding: 16px;
+    width: 300px;
+  }
+
+  .calendar-dropdown.open {
+    display: block;
+  }
+
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-month-label { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .cal-nav { background: none; border: none; cursor: pointer; color: var(--navy); padding: 5px 8px; border-radius: 6px; display: flex; align-items: center; transition: background 0.12s; }
+  .cal-nav:hover { background: #f0ecf8; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-light); padding: 4px 0 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .cal-day { text-align: center; padding: 7px 2px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; color: var(--text); transition: background 0.1s, color 0.1s; }
+  .cal-day:hover { background: #f0ecf8; color: var(--navy); }
+  .cal-day.today { border: 1.5px solid var(--navy); font-weight: 700; }
+  .cal-day.selected { background: var(--navy); color: white; font-weight: 700; }
+  .cal-day.selected:hover { background: #3a2060; }
+  .cal-day.empty { cursor: default; pointer-events: none; }
+
+  /* Controls */
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .refresh-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--navy); color: white; border: none; padding: 9px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; letter-spacing: 0.2px; }
+  .refresh-btn:hover { background: #3a2060; }
+  .refresh-btn:active { transform: scale(0.97); }
+  .refresh-btn.loading { opacity: 0.6; pointer-events: none; }
+  .refresh-btn.loading svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-bar { font-size: 12px; color: var(--text-muted); text-align: right; margin-bottom: 16px; }
+  .status-bar.error { color: #dc2626; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-bar select { font-size: 13px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: white; color: var(--text); cursor: pointer; font-family: inherit; }
+
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 20px; }
+  @media (max-width: 580px) { .games-grid { grid-template-columns: 1fr; } }
+
+  .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow 0.2s; }
+  .game-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+  .game-header { background: var(--navy); color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .matchup { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .team-abbr { display: inline-flex; align-items: center; gap: 5px; }
+  .team-logo { width: 28px; height: 28px; object-fit: contain; filter: brightness(0) invert(1); }
+  .vs-sep { font-size: 11px; opacity: 0.6; font-weight: 400; }
+  .game-meta { text-align: right; font-size: 12px; opacity: 0.85; }
+  .game-time { font-weight: 700; font-size: 13px; }
+  .game-venue { opacity: 0.7; margin-top: 1px; }
+  .game-status-pill { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; margin-top: 3px; }
+  .game-status-pill.live { background: #d50032; }
+  .game-status-pill.final { background: rgba(255,255,255,0.15); }
+
+  .pitchers-row { display: grid; grid-template-columns: 1fr 1fr; background: #f8fafc; border-bottom: 1px solid var(--border); }
+  .pitcher-cell { padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .pitcher-cell + .pitcher-cell { border-left: 1px solid var(--border); }
+  .pitcher-photo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); background: #e5e7eb; flex-shrink: 0; }
+  .pitcher-info { min-width: 0; }
+  .pitcher-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pitcher-name a { color: inherit; text-decoration: none; }
+  .pitcher-name a:hover { color: var(--navy); text-decoration: underline; }
+  .pitcher-stats { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .lineups-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .lineup-col { padding: 12px 14px; }
+  .lineup-col + .lineup-col { border-left: 1px solid var(--border); }
+  .lineup-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .lineup-label img { width: 18px; height: 18px; object-fit: contain; }
+  .lineup-list { list-style: none; }
+  .lineup-player { display: flex; align-items: baseline; gap: 6px; padding: 4px 0; border-bottom: 1px solid #f3f4f6; font-size: 12.5px; line-height: 1.4; }
+  .lineup-player:last-child { border-bottom: none; }
+  .batting-order { color: var(--text-light); font-size: 11px; font-weight: 600; min-width: 14px; flex-shrink: 0; }
+  .jersey-num { color: var(--number-color); font-size: 12px; font-weight: 800; min-width: 22px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .player-name-link { color: var(--text); text-decoration: none; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .player-name-link:hover { color: var(--navy); text-decoration: underline; }
+  .player-hand { color: var(--text-light); font-size: 10px; flex-shrink: 0; }
+  .player-pos { color: var(--text-muted); font-size: 11px; font-weight: 600; flex-shrink: 0; min-width: 26px; text-align: right; }
+  .tbd-lineup { color: var(--text-light); font-style: italic; font-size: 12px; padding: 8px 0; text-align: center; }
+
+  .game-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); background: #fafbfc; }
+  .game-footer a { font-size: 12px; font-weight: 600; color: var(--navy); text-decoration: none; padding: 5px 12px; border: 1px solid var(--border); border-radius: 5px; transition: background 0.1s; }
+  .game-footer a:hover { background: #f0ecf8; }
+  .game-footer a.primary { background: #241442; color: white; border-color: #241442; }
+  .game-footer a.primary:hover { background: #3a2060; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state h3 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
+
+  .skeleton { background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 4px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .note-bar { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+  .note-bar span { color: var(--number-color); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="mlb-logo" href="https://www.mlb.com"><span>M</span>LB</a>
+    <span class="header-title">Starting Lineups</span>
+  </div>
+</header>
+
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Starting Lineups</h1>
+      <div class="date-badge" id="date-subtitle"></div>
+    </div>
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDate(-1)" title="Previous day">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="date-nav-label" id="date-display" onclick="toggleCalendar(event)"></div>
+      <button class="date-nav-btn" onclick="changeDate(1)" title="Next day">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="controls">
+      <button class="refresh-btn" id="refresh-btn" onclick="loadLineups()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M8 16H3v5"/>
+        </svg>
+        Refresh Lineups
+      </button>
+    </div>
+  </div>
+
+  <div class="note-bar">All times Pacific. Subject to change. &nbsp;|&nbsp; <span>#</span> = Jersey number</div>
+  <div class="status-bar" id="status-bar"></div>
+
+  <div class="filter-bar">
+    <select id="team-filter" onchange="filterGames()">
+      <option value="all">All Teams</option>
+    </select>
+  </div>
+
+  <div class="games-grid" id="games-grid">
+    <div style="grid-column:1/-1; padding:40px; text-align:center; color:#9ca3af; font-size:15px;">
+      Click <strong>Refresh Lineups</strong> to load today's games.
+    </div>
+  </div>
+</div>
+
+<script>
+const MLB_API = 'https://statsapi.mlb.com/api/v1';
+let currentDate = new Date();
+
+const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+function updateDateDisplay() {
+  const label = currentDate.toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('date-display').textContent = label;
+  const subtitle = currentDate.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('date-subtitle').textContent = subtitle;
+}
+
+function changeDate(delta) {
+  currentDate = new Date(currentDate);
+  currentDate.setDate(currentDate.getDate() + delta);
+  updateDateDisplay();
+  loadLineups();
+}
+
+updateDateDisplay();
+
+let allGames = [];
+let playerNumCache = {};
+let workingProxy = null; // cache which proxy works
+
+// Try fetching a URL directly, then via multiple proxies
+async function fetchWithFallback(url) {
+  const attempts = [
+    // 1. Direct
+    async () => {
+      const r = await fetch(url);
+      return r.json();
+    },
+    // 2. allorigins - wraps response in { contents: "<json string>" }
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const j = await r.json();
+      if (!j.contents) throw new Error('allorigins returned no contents');
+      return JSON.parse(j.contents);
+    },
+    // 3. corsproxy.io
+    async () => {
+      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+      return r.json();
+    },
+    // 4. thingproxy
+    async () => {
+      const r = await fetch(`https://thingproxy.freeboard.io/fetch/${url}`);
+      return r.json();
+    },
+  ];
+
+  // If we already found a working method, use it first
+  if (workingProxy !== null) {
+    try {
+      const data = await attempts[workingProxy]();
+      if (data) return data;
+    } catch(e) {
+      console.warn(`Cached proxy ${workingProxy} failed, re-probing:`, e.message);
+      workingProxy = null;
+    }
+  }
+
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      console.log(`Trying method ${i}…`);
+      const data = await attempts[i]();
+      if (data) {
+        workingProxy = i;
+        console.log(`✓ Method ${i} succeeded`);
+        return data;
+      }
+    } catch(e) {
+      console.warn(`Method ${i} failed:`, e.message);
+    }
+  }
+  throw new Error('All fetch methods failed. Check your internet connection.');
+}
+
+async function getPlayerJerseyNum(playerId) {
+  if (playerNumCache[playerId] !== undefined) return playerNumCache[playerId];
+  try {
+    const d = await fetchWithFallback(`${MLB_API}/people/${playerId}?fields=people,id,primaryNumber`);
+    const num = d.people?.[0]?.primaryNumber || '—';
+    playerNumCache[playerId] = num;
+    return num;
+  } catch {
+    playerNumCache[playerId] = '—';
+    return '—';
+  }
+}
+
+const REFRESH_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`;
+
+async function loadLineups() {
+  const btn = document.getElementById('refresh-btn');
+  const grid = document.getElementById('games-grid');
+  const status = document.getElementById('status-bar');
+
+  btn.classList.add('loading');
+  btn.innerHTML = `${REFRESH_SVG} Loading...`;
+  status.className = 'status-bar';
+  status.textContent = 'Fetching schedule…';
+
+  grid.innerHTML = Array(4).fill(0).map(() => `
+    <div class="game-card">
+      <div class="game-header" style="background:#dde2ea">
+        <div class="skeleton" style="width:200px;height:20px"></div>
+        <div class="skeleton" style="width:80px;height:20px"></div>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        ${Array(9).fill(0).map(()=>`<div class="skeleton" style="width:100%;height:14px"></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  try {
+    const todayFmt = formatDate(currentDate);
+    const d = await fetchWithFallback(`${MLB_API}/schedule?sportId=1&date=${todayFmt}&hydrate=lineups,probablePitcher(note),linescore,team`);
+    const dates = d.dates || [];
+    const games = dates.length ? dates[0].games : [];
+
+    if (!games.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>No games today</h3><p>Check back on a game day!</p></div>`;
+      status.textContent = 'No games scheduled for today.';
+      btn.classList.remove('loading');
+      btn.innerHTML = `${REFRESH_SVG} Refresh Lineups`;
+      return;
+    }
+
+    allGames = games;
+    populateTeamFilter(games);
+    status.textContent = `Loaded ${games.length} game${games.length!==1?'s':''}. Fetching jersey numbers…`;
+
+    const uniqueIds = [...new Set([
+      ...games.flatMap(g =>
+        ['away','home'].flatMap(side => (g.lineups?.[side+'Players']||[]).map(p=>p.id))
+      ),
+      ...games.flatMap(g => [g.teams.away.probablePitcher?.id, g.teams.home.probablePitcher?.id].filter(Boolean))
+    ])];
+
+    // Batch jersey number fetches — 10 at a time to avoid rate limiting
+    for (let i = 0; i < uniqueIds.length; i += 10) {
+      await Promise.all(uniqueIds.slice(i, i + 10).map(id => getPlayerJerseyNum(id)));
+    }
+
+    await renderGames(games);
+    status.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+  } catch(e) {
+    console.error('loadLineups failed:', e);
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <h3>Failed to load lineups</h3>
+        <p style="margin-bottom:12px">${e.message}</p>
+        <p style="font-size:13px;color:#6b7280">
+          If you're opening this file directly (file://), try running a local server instead:<br><br>
+          <code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;font-size:12px">python3 -m http.server 8080</code><br><br>
+          Then open <strong>http://localhost:8080/mlb-lineups.html</strong>
+        </p>
+      </div>`;
+    status.className = 'status-bar error';
+    status.textContent = `Error: ${e.message}`;
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = `${REFRESH_SVG} Refresh Lineups`;
+}
+
+function populateTeamFilter(games) {
+  const sel = document.getElementById('team-filter');
+  const teams = new Map();
+  games.forEach(g => {
+    teams.set(g.teams.away.team.id, g.teams.away.team.abbreviation);
+    teams.set(g.teams.home.team.id, g.teams.home.team.abbreviation);
+  });
+  sel.innerHTML = '<option value="all">All Teams</option>' +
+    [...teams.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,abbr])=>
+      `<option value="${id}">${abbr}</option>`).join('');
+}
+
+function filterGames() {
+  const val = document.getElementById('team-filter').value;
+  const cards = document.querySelectorAll('.game-card[data-away][data-home]');
+  cards.forEach(c => {
+    if (val === 'all' || c.dataset.away === String(val) || c.dataset.home === String(val)) {
+      c.style.display = '';
+    } else {
+      c.style.display = 'none';
+    }
+  });
+}
+
+function gameStatusLabel(g) {
+  const s = g.status?.abstractGameState;
+  const detail = g.status?.detailedState;
+  if (s === 'Live') return { label: detail || 'Live', cls: 'live' };
+  if (s === 'Final') return { label: 'Final', cls: 'final' };
+  return null;
+}
+
+function formatGameTime(g) {
+  try {
+    const dt = new Date(g.gameDate);
+    return dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone:'America/Los_Angeles' });
+  } catch { return ''; }
+}
+
+async function renderGames(games) {
+  const grid = document.getElementById('games-grid');
+  const cards = await Promise.all(games.map(g => buildGameCard(g)));
+  grid.innerHTML = cards.join('');
+}
+
+async function buildGameCard(g) {
+  const awayTeam = g.teams.away.team;
+  const homeTeam = g.teams.home.team;
+  const awayId = awayTeam.id;
+  const homeId = homeTeam.id;
+  const awayAbbr = awayTeam.abbreviation;
+  const homeAbbr = homeTeam.abbreviation;
+  const awayRecord = g.teams.away.leagueRecord ? `${g.teams.away.leagueRecord.wins}-${g.teams.away.leagueRecord.losses}` : '';
+  const homeRecord = g.teams.home.leagueRecord ? `${g.teams.home.leagueRecord.wins}-${g.teams.home.leagueRecord.losses}` : '';
+  const gameTime = formatGameTime(g);
+  const venue = g.venue?.name || '';
+  const statusInfo = gameStatusLabel(g);
+  const gamePk = g.gamePk;
+
+  const awayPitcher = g.teams.away.probablePitcher;
+  const homePitcher = g.teams.home.probablePitcher;
+
+  const awayPlayers = g.lineups?.awayPlayers || [];
+  const homePlayers = g.lineups?.homePlayers || [];
+
+  const logoBase = 'https://www.mlbstatic.com/team-logos';
+
+  const pitcherCell = async (pitcher, teamId) => {
+    if (!pitcher) return `<div class="pitcher-cell"><div style="font-size:12px;color:#9ca3af;font-style:italic">TBD</div></div>`;
+    const num = await getPlayerJerseyNum(pitcher.id);
+    return `
+      <div class="pitcher-cell">
+        <img class="pitcher-photo" src="https://content.mlb.com/images/headshots/current/60x60/${pitcher.id}@3x.png" onerror="this.src='https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pitcher.id}/headshot/67/current'" alt="${pitcher.fullName}">
+        <div class="pitcher-info">
+          <div class="pitcher-name"><a href="https://www.mlb.com/player/${pitcher.id}" target="_blank">#${num} ${pitcher.fullName}</a></div>
+          <div class="pitcher-stats">${pitcher.note || (pitcher.stats?.pitching ? `${pitcher.stats.pitching.era || ''} ERA` : 'P')}</div>
+        </div>
+      </div>`;
+  };
+
+  const buildLineup = async (players) => {
+    if (!players.length) return `<div class="tbd-lineup">Lineup not yet available</div>`;
+    const rows = await Promise.all(players.map(async (p, i) => {
+      const num = await getPlayerJerseyNum(p.id);
+      const pos = p.primaryPosition?.abbreviation || p.position?.abbreviation || '';
+      const hand = p.batSide?.code || p.bats || '';
+      const name = p.fullName || p.lastFirstName || 'Unknown';
+      return `<li class="lineup-player">
+        <span class="batting-order">${i+1}.</span>
+        <span class="jersey-num">#${num}</span>
+        <a class="player-name-link" href="https://www.mlb.com/player/${p.id}" target="_blank">${name}</a>
+        ${hand ? `<span class="player-hand">(${hand})</span>` : ''}
+        <span class="player-pos">${pos}</span>
+      </li>`;
+    }));
+    return `<ul class="lineup-list">${rows.join('')}</ul>`;
+  };
+
+  const [awayPitcherHtml, homePitcherHtml, awayLineupHtml, homeLineupHtml] = await Promise.all([
+    pitcherCell(awayPitcher, awayId),
+    pitcherCell(homePitcher, homeId),
+    buildLineup(awayPlayers),
+    buildLineup(homePlayers),
+  ]);
+
+  return `
+<div class="game-card" data-away="${String(awayId)}" data-home="${String(homeId)}">
+  <div class="game-header">
+    <div class="matchup">
+      <span class="team-abbr">
+        <img class="team-logo" src="${logoBase}/${awayId}.svg" alt="${awayAbbr}" onerror="this.style.display='none'">
+        ${awayAbbr}
+        ${awayRecord ? `<span style="font-weight:400;opacity:0.65;font-size:12px">(${awayRecord})</span>` : ''}
+      </span>
+      <span class="vs-sep">@</span>
+      <span class="team-abbr">
+        <img class="team-logo" src="${logoBase}/${homeId}.svg" alt="${homeAbbr}" onerror="this.style.display='none'">
+        ${homeAbbr}
+        ${homeRecord ? `<span style="font-weight:400;opacity:0.65;font-size:12px">(${homeRecord})</span>` : ''}
+      </span>
+    </div>
+    <div class="game-meta">
+      <div class="game-time">${statusInfo ? '' : gameTime}</div>
+      ${statusInfo ? `<div class="game-status-pill ${statusInfo.cls}">${statusInfo.label}</div>` : ''}
+      <div class="game-venue">${venue}</div>
+    </div>
+  </div>
+
+  <div class="pitchers-row">
+    ${awayPitcherHtml}
+    ${homePitcherHtml}
+  </div>
+
+  <div class="lineups-row">
+    <div class="lineup-col">
+      <div class="lineup-label">
+        <img src="${logoBase}/${awayId}.svg" alt="${awayAbbr}" onerror="this.style.display='none'">
+        ${awayAbbr} Lineup
+      </div>
+      ${awayLineupHtml}
+    </div>
+    <div class="lineup-col">
+      <div class="lineup-label">
+        <img src="${logoBase}/${homeId}.svg" alt="${homeAbbr}" onerror="this.style.display='none'">
+        ${homeAbbr} Lineup
+      </div>
+      ${homeLineupHtml}
+    </div>
+  </div>
+
+  <div class="game-footer">
+    <a href="https://www.mlb.com/gameday/${gamePk}" target="_blank">Gameday</a>
+    <a class="primary" href="https://www.mlb.com/scores" target="_blank">Scores</a>
+  </div>
+</div>`;
+}
+
+// ── Calendar ──────────────────────────────────────────────
+let calViewDate = new Date();
+
+function toggleCalendar(e) {
+  e.stopPropagation();
+  const cal = document.getElementById('calendar-dropdown');
+  if (cal.classList.contains('open')) {
+    closeCalendar();
+    return;
+  }
+  const label = document.getElementById('date-display');
+  const rect = label.getBoundingClientRect();
+  cal.style.top = (rect.bottom + 8) + 'px';
+  cal.style.left = Math.max(8, Math.round(rect.left + rect.width / 2 - 150)) + 'px';
+  calViewDate = new Date(currentDate);
+  renderCalendar();
+  cal.classList.add('open');
+}
+
+function closeCalendar() {
+  document.getElementById('calendar-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  const cal = document.getElementById('calendar-dropdown');
+  if (cal && cal.classList.contains('open') && !cal.contains(e.target)) {
+    closeCalendar();
+  }
+});
+
+function calShiftMonth(delta, e) {
+  e.stopPropagation();
+  calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() + delta, 1);
+  renderCalendar();
+}
+
+function selectCalDay(year, month, day, e) {
+  e.stopPropagation();
+  currentDate = new Date(year, month, day);
+  updateDateDisplay();
+  closeCalendar();
+  loadLineups();
+}
+
+function renderCalendar() {
+  const cal = document.getElementById('calendar-dropdown');
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  const monthLabel = calViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const todayStr = formatDate(new Date());
+  const selectedStr = formatDate(currentDate);
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const dowHtml = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  let dayHtml = '';
+  for (let i = 0; i < firstDay; i++) dayHtml += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = formatDate(new Date(year, month, d));
+    const cls = ['cal-day', ds === todayStr ? 'today' : '', ds === selectedStr ? 'selected' : ''].filter(Boolean).join(' ');
+    dayHtml += `<div class="${cls}" onclick="selectCalDay(${year},${month},${d},event)">${d}</div>`;
+  }
+  cal.innerHTML = `
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calShiftMonth(-1,event)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="cal-month-label">${monthLabel}</div>
+      <button class="cal-nav-btn" onclick="calShiftMonth(1,event)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="cal-grid">${dowHtml}${dayHtml}</div>`;
+}
+</script>
+<div class="calendar-dropdown" id="calendar-dropdown"></div>
+</body>
+</html>
