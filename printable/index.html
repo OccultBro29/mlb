@@ -228,10 +228,11 @@
     return r.json();
   }
 
+  const INVALID_STATES = new Set(["Cancelled","Postponed","Suspended"]);
+
   async function fetchTodayGames(date) {
     const data = await fetchJSON(`${MLB}/schedule?sportId=1&date=${date}&hydrate=team,linescore`);
-    const invalid = ["Cancelled","Postponed","Suspended"];
-    return (data.dates?.[0]?.games || []).filter(g => !invalid.includes(g.status?.detailedState));
+    return (data.dates?.[0]?.games || []).filter(g => !INVALID_STATES.has(g.status?.detailedState));
   }
 
   async function fetchSeasonAvg(teamId, season) {
@@ -304,12 +305,13 @@
   // ── Init ───────────────────────────────────────────────────────────────────
 
   async function init() {
-    const today     = datePT();
+    const now       = new Date();
+    const today     = now.toLocaleDateString("en-CA", { timeZone: LA });
     const yesterday = datePT(-1);
     const season    = today.slice(0, 4);
 
     document.getElementById("date-line").textContent =
-      new Date().toLocaleDateString("en-US", {
+      now.toLocaleDateString("en-US", {
         timeZone: LA, weekday: "long", year: "numeric", month: "long", day: "numeric"
       }) + " · All times Pacific";
 
