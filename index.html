@@ -593,11 +593,12 @@ async function buildGameCard(g) {
     const statsLine = pStats
       ? `${pStats.w}-${pStats.l}, ${pStats.era} ERA, ${pStats.so} SO`
       : (pitcher.note || 'SP');
+    const handLabel = pStats?.hand === 'L' ? ' LHP' : pStats?.hand === 'R' ? ' RHP' : '';
     return `
       <div class="pitcher-cell">
         <img class="pitcher-photo" src="https://content.mlb.com/images/headshots/current/60x60/${pitcher.id}@3x.png" onerror="this.src='https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pitcher.id}/headshot/67/current'" alt="${pitcher.fullName}">
         <div class="pitcher-info">
-          <div class="pitcher-name"><a href="https://www.mlb.com/player/${pitcher.id}" target="_blank" onmouseenter="fetchPlayerBio(${pitcher.id}).then(()=>showTooltip(this,${pitcher.id},true))" onmouseleave="hideTooltip()">#${num} ${pitcher.fullName}</a></div>
+          <div class="pitcher-name"><a href="https://www.mlb.com/player/${pitcher.id}" target="_blank" onmouseenter="fetchPlayerBio(${pitcher.id}).then(()=>showTooltip(this,${pitcher.id},true))" onmouseleave="hideTooltip()">#${num} ${pitcher.fullName}<span style="font-size:10px;font-weight:600;opacity:0.7;">${handLabel}</span></a></div>
           <div class="pitcher-stats-line">${statsLine}</div>
         </div>
       </div>`;
@@ -717,14 +718,18 @@ async function fetchPitcherStats(playerId) {
   const key = 'p_' + playerId;
   if (playerStatsCache[key] !== undefined) return playerStatsCache[key];
   try {
-    const url = `${MLB_API}/people/${playerId}/stats?stats=season&group=pitching&season=${new Date().getFullYear()}`;
-    const d = await fetchWithFallback(url);
-    const stat = d.stats?.[0]?.splits?.[0]?.stat || {};
+    const [statsData, bioData] = await Promise.all([
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season&group=pitching&season=${new Date().getFullYear()}`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}`)
+    ]);
+    const stat = statsData.stats?.[0]?.splits?.[0]?.stat || {};
+    const hand = bioData.people?.[0]?.pitchHand?.code || '';
     const result = {
       w: stat.wins ?? '—',
       l: stat.losses ?? '—',
       era: stat.era != null ? parseFloat(stat.era).toFixed(2) : '—',
       so: stat.strikeOuts ?? '—',
+      hand,
     };
     playerStatsCache[key] = result;
     return result;
