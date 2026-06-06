@@ -76,7 +76,7 @@
     .game-card {
       border: 1px solid #222;
       border-radius: 4px;
-      padding: 10px 12px;
+      padding: 16px 12px;
       break-inside: avoid;
       page-break-inside: avoid;
       background: white;
@@ -84,7 +84,7 @@
     .card-header {
       display: flex;
       justify-content: flex-end;
-      margin-bottom: 1px;
+      margin-bottom: 4px;
     }
     .game-time {
       font-size: 12px;
@@ -112,8 +112,8 @@
       font-size: 14px;
       font-weight: 700;
       border-bottom: 2px solid #333;
-      padding-bottom: 3px;
-      margin-bottom: 5px;
+      padding-bottom: 4px;
+      margin-bottom: 7px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -121,7 +121,7 @@
 
     /* ── Stats table ── */
     .stats-table { width: 100%; border-collapse: collapse; }
-    .stats-table td { padding: 3px 0; }
+    .stats-table td { padding: 5px 0; }
     .stats-table .lbl { color: #666; font-size: 12px; white-space: nowrap; }
     .stats-table .dots {
       width: 100%;
@@ -142,14 +142,14 @@
 
     /* ── Notes ── */
     .notes-area {
-      margin-top: 8px;
-      padding-bottom: 10px;
+      margin-top: 10px;
+      padding-bottom: 14px;
     }
     .note-line {
       display: flex;
       align-items: flex-end;
       gap: 6px;
-      margin-bottom: 5px;
+      margin-bottom: 7px;
     }
     .note-line:last-child { margin-bottom: 0; }
     .note-label {
@@ -163,13 +163,23 @@
 
     /* ── Print ── */
     @media print {
-      body { background: white; padding: 0; }
+      body { background: white; padding: 0; margin: 0; }
       #sheet { padding: 0; max-width: 100%; }
       #print-btn, #status { display: none !important; }
-      .game-row { margin-bottom: 0 !important; }
-      .game-card { height: 255px !important; overflow: hidden; }
+      .game-row { margin-bottom: 10px !important; }
+      .game-row.page-break { break-before: page; page-break-before: always; }
+      .game-card { padding: 10px 12px; }
+      .card-header { margin-bottom: 3px; }
+      .team-name { padding-bottom: 3px; margin-bottom: 5px; font-size: 13px; }
+      .stats-table td { padding: 3.5px 0; }
+      .stats-table .lbl { font-size: 11px; }
+      .stats-table .val { font-size: 12px; }
+      .notes-area { margin-top: 8px; padding-bottom: 8px; }
+      .note-line { margin-bottom: 5px; }
+      .note-label { font-size: 11px; }
+      .game-time { font-size: 11px; }
     }
-    @page { margin: 0.5in; size: letter portrait; }
+    @page { margin: 0.5in; size: 8.5in 11in portrait; }
   </style>
 </head>
 <body>
@@ -220,8 +230,8 @@
 
   async function fetchTodayGames(date) {
     const data = await fetchJSON(`${MLB}/schedule?sportId=1&date=${date}&hydrate=team,linescore`);
-    const valid = ["Preview","Pre-Game","Scheduled","Warmup","In Progress","Final","Game Over"];
-    return (data.dates?.[0]?.games || []).filter(g => valid.includes(g.status?.detailedState));
+    const invalid = ["Cancelled","Postponed","Suspended"];
+    return (data.dates?.[0]?.games || []).filter(g => !invalid.includes(g.status?.detailedState));
   }
 
   async function fetchSeasonAvg(teamId, season) {
@@ -312,10 +322,9 @@
 
       // Render card shells
       statusEl.style.display = "none";
-      const rows = [];
-      for (let i = 0; i < games.length; i += 2) rows.push(games.slice(i, i + 2));
-      gamesEl.innerHTML = rows.map(row =>
-        `<div class="game-row${row.length === 1 ? " single" : ""}">${row.map(gameCardHTML).join("")}</div>`
+      const rows = Array.from({ length: Math.ceil(games.length / 2) }, (_, i) => games.slice(i * 2, i * 2 + 2));
+      gamesEl.innerHTML = rows.map((row, i) =>
+        `<div class="game-row${row.length === 1 ? " single" : ""}${i > 0 && i % 3 === 0 ? " page-break" : ""}">${row.map(gameCardHTML).join("")}</div>`
       ).join("");
 
       // Map each unique team to its gamePks (a team can appear once, but map handles edge cases)
