@@ -296,6 +296,76 @@
     padding-top: 1px;
   }
 
+
+  .multi-select {
+    position: relative;
+  }
+
+  .multi-select-btn {
+    font-size: 13px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .multi-select-btn:hover { background: #f0ecf8; }
+
+  .multi-select-arrow { font-size: 10px; opacity: 0.6; }
+
+  .multi-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    z-index: 500;
+    min-width: 160px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 6px 0;
+  }
+
+  .multi-select-dropdown.open { display: block; }
+
+  .multi-select-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text);
+    user-select: none;
+  }
+
+  .multi-select-option:hover { background: #f0ecf8; }
+
+  .multi-select-option input[type="checkbox"] {
+    accent-color: var(--navy);
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .multi-select-option.all-option {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+    font-weight: 600;
+  }
+
   .tbd-lineup { color: var(--text-light); font-style: italic; font-size: 12px; padding: 8px 0; text-align: center; }
 
   .game-footer { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); background: #fafbfc; }
@@ -353,9 +423,12 @@
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div class="filter-bar" style="margin-bottom:0;">
-      <select id="team-filter" onchange="filterGames()">
-        <option value="all">All Teams</option>
-      </select>
+      <div class="multi-select" id="team-filter-wrap">
+        <button class="multi-select-btn" id="team-filter-btn" onclick="toggleTeamDropdown(event)">
+          All Teams <span class="multi-select-arrow">▾</span>
+        </button>
+        <div class="multi-select-dropdown" id="team-filter-dropdown"></div>
+      </div>
     </div>
     <div class="status-bar" id="status-bar" style="margin-bottom:0;text-align:right;"></div>
   </div>
@@ -537,27 +610,61 @@ async function loadLineups() {
 }
 
 function populateTeamFilter(games) {
-  const sel = document.getElementById('team-filter');
+  const drop = document.getElementById('team-filter-dropdown');
   const teams = new Map();
   games.forEach(g => {
-    teams.set(g.teams.away.team.id, g.teams.away.team.abbreviation);
-    teams.set(g.teams.home.team.id, g.teams.home.team.abbreviation);
+    teams.set(String(g.teams.away.team.id), g.teams.away.team.abbreviation);
+    teams.set(String(g.teams.home.team.id), g.teams.home.team.abbreviation);
   });
-  sel.innerHTML = '<option value="all">All Teams</option>' +
-    [...teams.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,abbr])=>
-      `<option value="${id}">${abbr}</option>`).join('');
+  const sorted = [...teams.entries()].sort((a,b) => a[1].localeCompare(b[1]));
+  drop.innerHTML = `
+    <label class="multi-select-option all-option">
+      <input type="checkbox" id="filter-all" checked onchange="toggleAllTeams(this)"> All Teams
+    </label>` +
+    sorted.map(([id, abbr]) =>
+      `<label class="multi-select-option">
+        <input type="checkbox" class="team-cb" value="${id}" checked onchange="filterGames()"> ${abbr}
+      </label>`
+    ).join('');
 }
 
+function toggleTeamDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('team-filter-dropdown').classList.toggle('open');
+}
+
+function toggleAllTeams(cb) {
+  document.querySelectorAll('.team-cb').forEach(c => c.checked = cb.checked);
+  filterGames();
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('team-filter-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('team-filter-dropdown').classList.remove('open');
+  }
+});
+
 function filterGames() {
-  const val = document.getElementById('team-filter').value;
-  const cards = document.querySelectorAll('.game-card[data-away][data-home]');
-  cards.forEach(c => {
-    if (val === 'all' || c.dataset.away === String(val) || c.dataset.home === String(val)) {
-      c.style.display = '';
-    } else {
-      c.style.display = 'none';
-    }
+  const checked = [...document.querySelectorAll('.team-cb:checked')].map(c => c.value);
+  const allCb = document.getElementById('filter-all');
+  const total = document.querySelectorAll('.team-cb').length;
+  if (allCb) allCb.checked = checked.length === total;
+  updateFilterBtn(checked, total);
+  document.querySelectorAll('.game-card[data-away][data-home]').forEach(c => {
+    c.style.display = (checked.includes(c.dataset.away) || checked.includes(c.dataset.home)) ? '' : 'none';
   });
+}
+
+function updateFilterBtn(checked, total) {
+  const btn = document.getElementById('team-filter-btn');
+  if (!btn) return;
+  const label = checked.length === 0 ? 'No Teams'
+    : checked.length === total ? 'All Teams'
+    : checked.length === 1
+      ? document.querySelector('.team-cb[value="'+checked[0]+'"]')?.closest('label')?.textContent?.trim() || '1 Team'
+      : checked.length + ' Teams';
+  btn.innerHTML = label + ' <span class="multi-select-arrow">▾</span>';
 }
 
 function gameStatusLabel(g) {
