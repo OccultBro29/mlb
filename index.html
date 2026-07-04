@@ -847,16 +847,20 @@ async function fetchPitcherStats(playerId) {
   if (playerStatsCache[key] !== undefined) return playerStatsCache[key];
   try {
     const [statsData, bioData] = await Promise.all([
-      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season&group=pitching&season=${new Date().getFullYear()}`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season,career&group=pitching&season=${new Date().getFullYear()}`),
       fetchWithFallback(`${MLB_API}/people/${playerId}`)
     ]);
-    const stat = statsData.stats?.[0]?.splits?.[0]?.stat || {};
+    const season = statsData.stats?.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
+    const career = statsData.stats?.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat || {};
     const hand = bioData.people?.[0]?.pitchHand?.code || '';
     const result = {
-      w: stat.wins ?? '—',
-      l: stat.losses ?? '—',
-      era: stat.era != null ? parseFloat(stat.era).toFixed(2) : '—',
-      so: stat.strikeOuts ?? '—',
+      w: season.wins ?? '—',
+      l: season.losses ?? '—',
+      era: season.era != null ? parseFloat(season.era).toFixed(2) : '—',
+      so: season.strikeOuts ?? '—',
+      cSO: career.strikeOuts ?? '—',
+      bb: season.baseOnBalls ?? '—',
+      cBB: career.baseOnBalls ?? '—',
       hand,
     };
     playerStatsCache[key] = result;
@@ -883,7 +887,7 @@ async function fetchPlayerBio(playerId) {
   try {
     const year = new Date().getFullYear();
     const [gamesD, bioD, logD] = await Promise.all([
-      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season,career&group=hitting&season=${year}&fields=stats,type,displayName,splits,stat,gamesPlayed`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season,career&group=hitting&season=${year}`),
       fetchWithFallback(`${MLB_API}/people/${playerId}?fields=people,id,birthDate`),
       fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=gameLog&group=hitting&season=${year}`)
     ]);
@@ -898,6 +902,8 @@ async function fetchPlayerBio(playerId) {
       dob,
       sG: season.gamesPlayed || 0,
       cG: career.gamesPlayed || 0,
+      sBB: season.baseOnBalls || 0,
+      cBB: career.baseOnBalls || 0,
       lastHits
     };
     return playerBioCache[playerId];
@@ -926,9 +932,15 @@ function showTooltip(el, playerId, dobOnly) {
   const hitsHtml = hits.length
     ? `<span class="tooltip-hits">${hits.map((h,i) => `<span class="tooltip-hit">${h}</span>`).join('')}</span>`
     : '';
+  const sBB = bio?.sBB ?? '—';
+  const cBB = bio?.cBB ?? '—';
+  const pStats = playerStatsCache['p_' + playerId];
+  const soHtml = (dobOnly && pStats)
+    ? `<span class="tooltip-frac"><span class="tn">${pStats.so}</span><span class="td">${pStats.cSO}</span></span>`
+    : '';
   tip.innerHTML = dobOnly
-    ? `<span class="tooltip-dob">${dobStr}</span>`
-    : `<span class="tooltip-dob">${dobStr}</span><span class="tooltip-frac"><span class="tn">${sG}</span><span class="td">${cG}</span></span>${hitsHtml}`;
+    ? `<span class="tooltip-dob">${dobStr}</span>${soHtml}${pStats ? `<span class="tooltip-frac"><span class="tn">${pStats.bb}</span><span class="td">${pStats.cBB}</span></span>` : ""}`
+    : `<span class="tooltip-dob">${dobStr}</span><span class="tooltip-frac"><span class="tn">${sG}</span><span class="td">${cG}</span></span>${hitsHtml}<span class="tooltip-frac"><span class="tn">${sBB}</span><span class="td">${cBB}</span></span>`;
 
   const rect = el.getBoundingClientRect();
   tip.style.left = rect.left + 'px';
