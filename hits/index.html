@@ -57,6 +57,58 @@
   .filter-select:focus { outline: 2px solid var(--navy); outline-offset: 1px; }
   .filter-sep { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
 
+  /* ── Multi-select team dropdown ─────────────── */
+  .ms-wrap { position: relative; min-width: 148px; }
+  .ms-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    font-size: 13px; padding: 7px 10px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: white; color: var(--text);
+    cursor: pointer; user-select: none; white-space: nowrap;
+    font-family: inherit;
+  }
+  .ms-trigger:focus { outline: 2px solid var(--navy); outline-offset: 1px; }
+  .ms-trigger.open { border-color: var(--navy); }
+  .ms-trigger .ms-arrow { font-size: 9px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s; }
+  .ms-trigger.open .ms-arrow { transform: rotate(180deg); }
+
+  .ms-panel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    background: white; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 500;
+    min-width: 210px; max-height: 280px; overflow: hidden;
+    flex-direction: column;
+  }
+  .ms-panel.open { display: flex; }
+  .ms-search {
+    padding: 8px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .ms-search input {
+    width: 100%; border: 1px solid var(--border); border-radius: 5px;
+    padding: 5px 8px; font-size: 12px; font-family: inherit; color: var(--text);
+    outline: none;
+  }
+  .ms-search input:focus { border-color: var(--navy); }
+  .ms-actions {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .ms-actions button {
+    flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600;
+    background: none; border: none; cursor: pointer; color: var(--navy);
+    font-family: inherit; transition: background 0.1s;
+  }
+  .ms-actions button:hover { background: #f0f4fa; }
+  .ms-actions button:first-child { border-right: 1px solid var(--border); }
+  .ms-list { overflow-y: auto; flex: 1; padding: 4px 0; }
+  .ms-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; cursor: pointer; font-size: 13px;
+    transition: background 0.1s;
+  }
+  .ms-item:hover { background: #f0f4fa; }
+  .ms-item input[type=checkbox] { accent-color: var(--navy); width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
+  .ms-item label { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   .load-btn {
     display: inline-flex; align-items: center; gap: 7px;
     background: var(--navy); color: white; border: none;
@@ -219,9 +271,21 @@
     </div>
     <div class="filter-group">
       <span class="filter-label">Team</span>
-      <select class="filter-select" id="team-select">
-        <option value="">All Teams</option>
-      </select>
+      <div class="ms-wrap" id="team-ms">
+        <div class="ms-trigger" id="team-trigger" tabindex="0"
+          onclick="toggleTeamDropdown()" onkeydown="if(event.key==='Enter'||event.key===' ')toggleTeamDropdown()">
+          <span id="team-trigger-label">All Teams</span>
+          <span class="ms-arrow">▼</span>
+        </div>
+        <div class="ms-panel" id="team-panel">
+          <div class="ms-search"><input type="text" placeholder="Search teams…" id="team-search" oninput="filterTeamList(this.value)" onclick="event.stopPropagation()"></div>
+          <div class="ms-actions">
+            <button onclick="selectAllTeams()">Select All</button>
+            <button onclick="clearTeams()">Clear</button>
+          </div>
+          <div class="ms-list" id="team-list"></div>
+        </div>
+      </div>
     </div>
     <div class="filter-group">
       <span class="filter-label">Player Pool</span>
@@ -298,7 +362,11 @@ function initDOM() {
   DOM.theadRow  = document.getElementById('thead-row');
   DOM.tooltip   = document.getElementById('player-tooltip');
   DOM.seasonSel = document.getElementById('season-select');
-  DOM.teamSel   = document.getElementById('team-select');
+  DOM.teamTrigger = document.getElementById('team-trigger');
+  DOM.teamLabel   = document.getElementById('team-trigger-label');
+  DOM.teamPanel   = document.getElementById('team-panel');
+  DOM.teamList    = document.getElementById('team-list');
+  DOM.teamSearch  = document.getElementById('team-search');
   DOM.poolSel   = document.getElementById('pool-select');
   DOM.statType  = document.getElementById('stat-type-select');
 }
@@ -384,7 +452,10 @@ async function fetchPlayerBio(playerId) {
       cG:  career.gamesPlayed || 0,
       sBB: season.baseOnBalls || 0,
       cBB: career.baseOnBalls || 0,
-      lastHits
+      lastHits,
+      avg7:  calcRollingAvg(gameSplits, 7),
+      avg15: calcRollingAvg(gameSplits, 15),
+      avg30: calcRollingAvg(gameSplits, 30),
     };
     return playerBioCache[playerId];
   } catch(e) {
@@ -429,6 +500,37 @@ function hideTooltip() {
   DOM.tooltip.classList.remove('visible');
 }
 
+// ── AVG rolling tooltip ──────────────────────────────────────────
+function calcRollingAvg(splits, n) {
+  const window = splits.slice(0, n);
+  if (!window.length) return '—';
+  const h  = window.reduce((s, g) => s + (g.stat?.hits    || 0), 0);
+  const ab = window.reduce((s, g) => s + (g.stat?.atBats  || 0), 0);
+  if (!ab) return '—';
+  return (h / ab).toFixed(3).replace('0.', '.');
+}
+
+function positionTooltip(el) {
+  const rect = el.getBoundingClientRect();
+  DOM.tooltip.style.left = rect.left + 'px';
+  DOM.tooltip.style.top  = '-9999px';
+  DOM.tooltip.classList.add('visible');
+  const tipH = DOM.tooltip.getBoundingClientRect().height;
+  DOM.tooltip.style.top = (rect.top - tipH - 4) + 'px';
+}
+
+function showAvgTooltip(el, playerId) {
+  const bio = playerBioCache[playerId];
+  if (!bio) return;
+  DOM.tooltip.innerHTML =
+    `<span class="tooltip-frac"><span class="tn">${bio.avg7}</span><span class="td">L7</span></span>` +
+    `<span style="opacity:0.4;font-size:10px;">/</span>` +
+    `<span class="tooltip-frac"><span class="tn">${bio.avg15}</span><span class="td">L15</span></span>` +
+    `<span style="opacity:0.4;font-size:10px;">/</span>` +
+    `<span class="tooltip-frac"><span class="tn">${bio.avg30}</span><span class="td">L30</span></span>`;
+  positionTooltip(el);
+}
+
 // ── Column definitions ──────────────────────────────────────────
 const COLS = [
   { key: 'rank',        label: 'RK',     title: 'Rank',                  sortable: false, cls: 'col-rank' },
@@ -468,21 +570,74 @@ function buildSeasonSelect() {
   sel.appendChild(frag);
 }
 
-// ── Team selector — single fetch, no duplicate ──────────────────
+// ── Team multi-select ────────────────────────────────────────────
+let allTeams     = [];   // [{ id, name }]
+let selectedTeams = new Set();
+
+function updateTeamTriggerLabel() {
+  const n = selectedTeams.size;
+  DOM.teamLabel.textContent = n === 0 ? 'All Teams'
+    : n === 1 ? allTeams.find(t => selectedTeams.has(t.id))?.name || '1 Team'
+    : `${n} Teams`;
+}
+
+function buildTeamListItems(teams) {
+  DOM.teamList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  teams.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'ms-item';
+    item.dataset.id = t.id;
+    item.innerHTML = `<input type="checkbox" id="tc-${t.id}" ${selectedTeams.has(t.id) ? 'checked' : ''}>
+      <label for="tc-${t.id}">${t.name}</label>`;
+    item.querySelector('input').addEventListener('change', e => {
+      e.target.checked ? selectedTeams.add(t.id) : selectedTeams.delete(t.id);
+      updateTeamTriggerLabel();
+    });
+    frag.appendChild(item);
+  });
+  DOM.teamList.appendChild(frag);
+}
+
+function filterTeamList(query) {
+  const q = query.toLowerCase();
+  const filtered = q ? allTeams.filter(t => t.name.toLowerCase().includes(q)) : allTeams;
+  buildTeamListItems(filtered);
+}
+
+function selectAllTeams() {
+  allTeams.forEach(t => selectedTeams.add(t.id));
+  filterTeamList(DOM.teamSearch.value);
+  updateTeamTriggerLabel();
+}
+
+function clearTeams() {
+  selectedTeams.clear();
+  filterTeamList(DOM.teamSearch.value);
+  updateTeamTriggerLabel();
+}
+
+function toggleTeamDropdown() {
+  const open = DOM.teamPanel.classList.toggle('open');
+  DOM.teamTrigger.classList.toggle('open', open);
+  if (open) { DOM.teamSearch.value = ''; filterTeamList(''); DOM.teamSearch.focus(); }
+}
+
+// Close when clicking outside
+document.addEventListener('click', e => {
+  if (!document.getElementById('team-ms').contains(e.target)) {
+    DOM.teamPanel.classList.remove('open');
+    DOM.teamTrigger.classList.remove('open');
+  }
+});
+
 async function loadTeams() {
   try {
-    const data  = await fetchWithFallback(`${MLB_API}/teams?sportId=1&activeStatus=Y`);
-    const teams = (data.teams || [])
+    const data = await fetchWithFallback(`${MLB_API}/teams?sportId=1&activeStatus=Y`);
+    allTeams = (data.teams || [])
       .filter(t => t.sport?.id === 1)
       .sort((a, b) => a.name.localeCompare(b.name));
-    const frag = document.createDocumentFragment();
-    teams.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.name;
-      frag.appendChild(opt);
-    });
-    DOM.teamSel.appendChild(frag);
+    buildTeamListItems(allTeams);
   } catch(e) {
     console.warn('Could not load team list:', e.message);
   }
@@ -598,7 +753,9 @@ function renderTable() {
   const col        = COLS.find(c => c.key === sortKey);
   const season     = DOM.seasonSel.value;
   const statType   = DOM.statType.value;
-  const teamLabel  = DOM.teamSel.options[DOM.teamSel.selectedIndex]?.text || 'All Teams';
+  const teamLabel  = selectedTeams.size === 0 ? 'All Teams'
+    : selectedTeams.size === 1 ? allTeams.find(t => selectedTeams.has(t.id))?.name || '1 Team'
+    : `${selectedTeams.size} Teams`;
   DOM.pageSub.textContent =
     `Sorted by ${col?.title || sortKey} — ${statType.charAt(0).toUpperCase() + statType.slice(1)} — ${season} — ${teamLabel}`;
 }
@@ -631,7 +788,7 @@ function renderSkeleton() {
 // ── Load stats from MLB API ──────────────────────────────────────
 async function loadStats() {
   const season   = DOM.seasonSel.value;
-  const teamId   = DOM.teamSel.value;
+  const teamIds  = [...selectedTeams];
   const pool     = DOM.poolSel.value;
   const statType = DOM.statType.value;
 
@@ -652,12 +809,16 @@ async function loadStats() {
   renderSkeleton();
 
   try {
-    let url = `${MLB_API}/stats?stats=${statType}&group=hitting&sportId=1&season=${season}&limit=500&gameType=R`;
-    if (teamId) url += `&teamId=${teamId}`;
-    if (pool)   url += `&playerPool=${pool}`;
+    const baseUrl = `${MLB_API}/stats?stats=${statType}&group=hitting&sportId=1&season=${season}&limit=500&gameType=R${pool ? `&playerPool=${pool}` : ''}`;
 
-    const data   = await fetchWithFallback(url);
-    const splits = data.stats?.[0]?.splits ?? [];
+    // The API doesn't accept comma-separated teamIds, so fire one request
+    // per selected team in parallel, then merge the results.
+    const urls = teamIds.length
+      ? teamIds.map(id => `${baseUrl}&teamId=${id}`)
+      : [baseUrl];
+
+    const responses = await Promise.all(urls.map(u => fetchWithFallback(u)));
+    const splits = responses.flatMap(data => data.stats?.[0]?.splits ?? []);
 
     if (!splits.length) {
       DOM.tbody.innerHTML = `<tr><td colspan="${COLS.length}"><div class="empty-state">
