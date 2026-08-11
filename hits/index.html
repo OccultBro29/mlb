@@ -523,11 +523,11 @@ function showAvgTooltip(el, playerId) {
   const bio = playerBioCache[playerId];
   if (!bio) return;
   DOM.tooltip.innerHTML =
-    `<span class="tooltip-frac"><span class="tn">${bio.avg7}</span><span class="td">L7</span></span>` +
+    `<span>${bio.avg7}</span>` +
     `<span style="opacity:0.4;font-size:10px;">/</span>` +
-    `<span class="tooltip-frac"><span class="tn">${bio.avg15}</span><span class="td">L15</span></span>` +
+    `<span>${bio.avg15}</span>` +
     `<span style="opacity:0.4;font-size:10px;">/</span>` +
-    `<span class="tooltip-frac"><span class="tn">${bio.avg30}</span><span class="td">L30</span></span>`;
+    `<span>${bio.avg30}</span>`;
   positionTooltip(el);
 }
 
@@ -727,6 +727,16 @@ function renderTable() {
                 <span class="team-abbr">${row.teamAbbr || '—'}</span>
               </div>
             </td>`;
+          case 'avg': {
+            const val     = row[c.key];
+            const display = (val === null || val === undefined || val === '') ? '—' : val;
+            const isHL    = c.key === sortKey;
+            return `<td class="${isHL ? 'stat-highlight' : 'stat-val'}${sc} pct-val">
+              <a href="javascript:void(0)"
+                style="color:inherit;text-decoration:none;cursor:default;"
+                onmouseenter="fetchPlayerBio(${row.playerId}).then(()=>showAvgTooltip(this,${row.playerId}))"
+                onmouseleave="hideTooltip()">${display}</a></td>`;
+          }
           default: {
             const val     = row[c.key];
             const display = (val === null || val === undefined || val === '') ? '—' : val;
