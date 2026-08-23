@@ -81,7 +81,7 @@
   .hit-avg-tooltip.visible { display: flex; }
 
   .hat-avg { opacity: 0.9; font-weight: 700; }
-  .hat-sep { opacity: 0.35; font-size: 9px; margin: 0 2px; }
+  .hat-sep { opacity: 0.85; font-size: 13px; margin: 0 2px; font-weight: 300; }
   .hat-recent { opacity: 0.85; color: white; }
 
   .calendar-dropdown {
@@ -423,7 +423,7 @@
     <div>
       <h1 class="page-title">Starting Lineups</h1>
       <div class="date-badge" id="date-subtitle"></div>
-      <div class="note-bar" style="margin-top:4px;">All times Pacific &nbsp;|&nbsp; AB &nbsp;Hits &nbsp;HR</div>
+      <div class="note-bar" style="margin-top:4px;">All times Pacific &nbsp;|&nbsp; AB &nbsp;Hits &nbsp;TB</div>
     </div>
     <div class="date-nav">
       <button class="date-nav-btn" onclick="changeDate(-1)" title="Previous day">
@@ -766,7 +766,9 @@ async function buildGameCard(g) {
       const pos = p.primaryPosition?.abbreviation || p.position?.abbreviation || '';
       const hand = p.batSide?.code || p.bats || '';
       const name = p.fullName || p.lastFirstName || 'Unknown';
-      const statsHtml = stats ? `<span class="player-stats-inline">${fracHTML(stats.sAB,stats.cAB,'AB')}<span class="stat-frac"><span class="numer" style="cursor:pointer;" onmouseenter="showHitAvg(this,${p.id})" onmouseleave="hideHitAvg()">${stats.sH}</span><span class="denom">${stats.cH}</span></span>${fracHTML(stats.sHR,stats.cHR,'HR')}</span>` : '';
+      const hFrac = `<span class="stat-frac"><span class="numer" style="cursor:pointer;" onmouseenter="showHitAvg(this,${p.id})" onmouseleave="hideHitAvg()">${stats.sH}</span><span class="denom">${stats.cH}</span></span>`;
+      const tbFrac = `<span class="stat-frac"><span class="numer" style="cursor:pointer;" onmouseenter="showTBAvg(this,${p.id})" onmouseleave="hideTBAvg()">${stats.sTB}</span><span class="denom">${stats.cTB}</span></span>`;
+      const statsHtml = stats ? `<span class="player-stats-inline">${fracHTML(stats.sAB,stats.cAB,'AB')}${hFrac}${tbFrac}</span>` : '';
       return `<li class="lineup-player">
         <span class="batting-order">${i+1}.</span>
         <span class="jersey-num">#${num}</span>
@@ -856,6 +858,10 @@ async function fetchBatterStats(playerId) {
       sG:  season.gamesPlayed || 0, cG:  career.gamesPlayed || 0,
       sAB: season.atBats || 0,      cAB: career.atBats || 0,
       sH:  season.hits || 0,        cH:  career.hits || 0,
+      sTB: season.totalBases || 0,  cTB: career.totalBases || 0,
+      sRBI: season.rbi || 0,        cRBI: career.rbi || 0,
+      s2B: season.doubles || 0,     c2B: career.doubles || 0,
+      s3B: season.triples || 0,     c3B: career.triples || 0,
       sHR: season.homeRuns || 0,    cHR: career.homeRuns || 0,
       sAVG: season.avg || '.000',   cAVG: career.avg || '.000',
     };
@@ -1033,6 +1039,39 @@ function hideHitAvg() {
   document.getElementById('hit-avg-tooltip').classList.remove('visible');
 }
 
+// ── TB Tooltip ────────────────────────────────────────────
+async function showTBAvg(el, playerId) {
+  const tip = document.getElementById('tb-avg-tooltip');
+  const stats = playerStatsCache[playerId];
+  if (!stats) return;
+  tip.innerHTML = '<span class="hat-loading">Loading…</span>';
+  tip.style.top = '-9999px';
+  tip.style.left = '-9999px';
+  tip.classList.add('visible');
+
+  // All data already in playerStatsCache — no extra fetch needed
+  const sRBI = stats.sRBI ?? '—'; const cRBI = stats.cRBI ?? '—';
+  const s2B  = stats.s2B  ?? '—'; const c2B  = stats.c2B  ?? '—';
+  const s3B  = stats.s3B  ?? '—'; const c3B  = stats.c3B  ?? '—';
+  const sHR  = stats.sHR  ?? '—'; const cHR  = stats.cHR  ?? '—';
+
+  tip.innerHTML = `
+    <span class="tooltip-frac"><span class="tn">${s2B}</span><span class="td">${c2B}</span></span>
+    <span class="hat-sep">/</span>
+    <span class="tooltip-frac"><span class="tn">${s3B}</span><span class="td">${c3B}</span></span>
+    <span class="hat-sep">/</span>
+    <span class="tooltip-frac"><span class="tn">${sHR}</span><span class="td">${cHR}</span></span>`;
+
+  const rect = el.getBoundingClientRect();
+  const tipRect = tip.getBoundingClientRect();
+  tip.style.left = Math.max(4, rect.left + rect.width / 2 - tipRect.width / 2) + 'px';
+  tip.style.top = (rect.top - tipRect.height - 4) + 'px';
+}
+
+function hideTBAvg() {
+  document.getElementById('tb-avg-tooltip').classList.remove('visible');
+}
+
 // ── Calendar ──────────────────────────────────────────────
 let calViewDate = new Date();
 
@@ -1111,5 +1150,6 @@ function renderCalendar() {
 <div class="calendar-dropdown" id="calendar-dropdown"></div>
 <div class="player-tooltip" id="player-tooltip"></div>
 <div class="hit-avg-tooltip" id="hit-avg-tooltip"></div>
+<div class="hit-avg-tooltip" id="tb-avg-tooltip"></div>
 </body>
 </html>
