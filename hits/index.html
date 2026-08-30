@@ -8,9 +8,9 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --navy:   #241442;
+    --navy:   #0b5d4b;
     --red:    #d50032;
-    --bg:     #f4f5f7;
+    --bg:     #F5EFE3;
     --surface:#ffffff;
     --border: #dde1e7;
     --text:   #1a1a2e;
@@ -27,7 +27,7 @@
   }
 
   /* ── Header (matches mlb-lineups.html exactly) ── */
-  header { background: #241442; color: white; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  header { background: #0b5d4b; color: white; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
   .header-inner { max-width: 1200px; margin: 0 auto; padding: 21px 16px; display: flex; align-items: center; gap: 16px; }
   .mlb-logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: white; text-decoration: none; }
   .mlb-logo span { color: #d50032; }
@@ -41,16 +41,16 @@
     margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
   }
   .page-title { font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: -0.4px; }
-  .page-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+  .page-sub   { font-size: 13px; color: #3b214a; margin-top: 3px; font-weight: 500; }
 
   /* ── Filter bar ─────────────────────────────── */
   .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
   .filter-group { display: flex; flex-direction: column; gap: 3px; }
-  .filter-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+  .filter-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #3b214a; }
   .filter-select {
     font-size: 13px; padding: 7px 28px 7px 10px;
     border: 1px solid var(--border); border-radius: 6px;
-    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background: #F5EFE3 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 10px center;
     background-size: 10px; appearance: none;
     color: var(--text); cursor: pointer; font-family: inherit; min-width: 120px;
   }
@@ -63,7 +63,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 6px;
     font-size: 13px; padding: 7px 10px;
     border: 1px solid var(--border); border-radius: 6px;
-    background: white; color: var(--text);
+    background: #F5EFE3; color: var(--text);
     cursor: pointer; user-select: none; white-space: nowrap;
     font-family: inherit;
   }
@@ -74,7 +74,7 @@
 
   .ms-panel {
     display: none; position: absolute; top: calc(100% + 4px); left: 0;
-    background: white; border: 1px solid var(--border); border-radius: 8px;
+    background: #F5EFE3; border: 1px solid var(--border); border-radius: 8px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 500;
     min-width: 210px; max-height: 280px; overflow: hidden;
     flex-direction: column;
@@ -117,7 +117,7 @@
     transition: background 0.14s, transform 0.1s;
     letter-spacing: 0.1px; white-space: nowrap; align-self: flex-end;
   }
-  .load-btn:hover { background: #3a2060; }
+  .load-btn:hover { background: #3b214a; }
   .load-btn:active { transform: scale(0.97); }
   .load-btn.loading { opacity: 0.6; pointer-events: none; }
   .load-btn.loading svg { animation: spin 0.9s linear infinite; }
@@ -128,13 +128,13 @@
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 10px; min-height: 22px; flex-wrap: wrap; gap: 8px;
   }
-  .status-text { font-size: 12px; color: var(--muted); }
+  .status-text { font-size: 12px; color: #3b214a; }
   .status-text.error { color: #dc2626; }
-  .row-count { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .row-count { font-size: 12px; color: #3b214a; font-weight: 500; }
 
   /* ── Table wrapper ──────────────────────────── */
   .table-wrap {
-    background: white; border: 1px solid var(--border);
+    background: #F5EFE3; border: 1px solid var(--border);
     border-radius: 10px; overflow: hidden;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
@@ -157,12 +157,12 @@
   thead th:last-child { border-right: none; }
   thead th:nth-child(1) { background: var(--navy); }
   thead th:nth-child(2) { text-align: left; min-width: 200px; background: var(--navy); }
-  thead th:hover { background: #3a2060; }
-  thead th.sorted { background: #3a2060; }
+  thead th:hover { background: #3b214a; }
+  thead th.sorted { background: #3b214a; }
   thead th .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.5; font-size: 9px; }
   thead th.sorted .sort-icon { opacity: 1; }
 
-  .col-sorted { background: #f8f9ff !important; }
+  .col-sorted { background: #f3eff7 !important; }
 
   tbody tr { border-bottom: 1px solid #f0f2f5; transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
@@ -200,7 +200,7 @@
   .pct-val { font-variant-numeric: tabular-nums; }
 
   /* ── Footer / load more ─────────────────────── */
-  .table-footer { padding: 16px; text-align: center; border-top: 1px solid var(--border); background: #fafbfd; }
+  .table-footer { padding: 16px; text-align: center; border-top: 1px solid var(--border); background: #F5EFE3; }
   .more-btn {
     background: none; border: 1.5px solid var(--navy); color: var(--navy);
     padding: 8px 24px; border-radius: 6px; font-size: 13px; font-weight: 700;
@@ -224,7 +224,7 @@
 
   /* ── Player tooltip (matches mlb-lineups.html) ── */
   .player-tooltip {
-    display: none; position: fixed; background: #241442; color: white;
+    display: none; position: fixed; background: #3b214a; color: white;
     border-radius: 7px; padding: 4px 6px; font-size: 11px; font-weight: 500;
     white-space: nowrap; z-index: 9999; pointer-events: none;
     box-shadow: 0 4px 14px rgba(0,0,0,0.25); gap: 8px; align-items: center;
@@ -298,6 +298,9 @@
       <span class="filter-label">Stat Type</span>
       <select class="filter-select" id="stat-type-select">
         <option value="season">Season</option>
+        <option value="last7">Last 7 Games</option>
+        <option value="last15">Last 15 Games</option>
+        <option value="last30">Last 30 Games</option>
         <option value="career">Career</option>
       </select>
     </div>
@@ -766,8 +769,9 @@ function renderTable() {
   const teamLabel  = selectedTeams.size === 0 ? 'All Teams'
     : selectedTeams.size === 1 ? allTeams.find(t => selectedTeams.has(t.id))?.name || '1 Team'
     : `${selectedTeams.size} Teams`;
+  const statLabel  = ROLLING_LABEL[statType] ?? (statType.charAt(0).toUpperCase() + statType.slice(1));
   DOM.pageSub.textContent =
-    `Sorted by ${col?.title || sortKey} — ${statType.charAt(0).toUpperCase() + statType.slice(1)} — ${season} — ${teamLabel}`;
+    `Sorted by ${col?.title || sortKey} — ${statLabel} — ${season} — ${teamLabel}`;
 }
 
 function showMore() {
@@ -795,6 +799,32 @@ function renderSkeleton() {
     </tr>`).join('');
 }
 
+// ── Schedule cache for rolling game-day windows ─────────────────
+// Fetches the last 60 calendar days of game dates for the selected season,
+// then finds the calendar date that was exactly N game-days ago. One fetch
+// per season, cached for the lifetime of the page.
+const scheduleCache = {};
+
+async function getStartDate(gameDaysBack, season) {
+  if (!scheduleCache[season]) {
+    const today     = new Date();
+    const lookback  = new Date(today);
+    lookback.setDate(today.getDate() - 65); // 65 days covers 30+ game days
+    const fmt       = d => d.toISOString().split('T')[0];
+    const url       = `${MLB_API}/schedule?sportId=1&season=${season}&gameType=R` +
+                      `&startDate=${fmt(lookback)}&endDate=${fmt(today)}` +
+                      `&fields=dates,date`;
+    const data      = await fetchWithFallback(url);
+    // Unique game dates, most-recent first
+    scheduleCache[season] = [...new Set((data.dates || []).map(d => d.date))]
+      .sort((a, b) => b.localeCompare(a));
+  }
+  // Index 0 = most recent game day; gameDaysBack-1 = Nth game day ago
+  return scheduleCache[season][gameDaysBack - 1] ?? null;
+}
+
+const ROLLING_LABEL = { last7: 'Last 7 Games', last15: 'Last 15 Games', last30: 'Last 30 Games' };
+
 // ── Load stats from MLB API ──────────────────────────────────────
 async function loadStats() {
   const season   = DOM.seasonSel.value;
@@ -819,7 +849,22 @@ async function loadStats() {
   renderSkeleton();
 
   try {
-    const baseUrl = `${MLB_API}/stats?stats=${statType}&group=hitting&sportId=1&season=${season}&limit=500&gameType=R${pool ? `&playerPool=${pool}` : ''}`;
+    // Resolve rolling stat types into a startDate on the season stats endpoint
+    const rollingDays = { last7: 7, last15: 15, last30: 30 };
+    const nDays       = rollingDays[statType];
+    let   apiStatType = statType;
+    let   dateParam   = '';
+
+    if (nDays) {
+      apiStatType = 'season';
+      const startDate = await getStartDate(nDays, season);
+      if (startDate) {
+        const today = new Date().toISOString().split('T')[0];
+        dateParam = `&startDate=${startDate}&endDate=${today}`;
+      }
+    }
+
+    const baseUrl = `${MLB_API}/stats?stats=${apiStatType}&group=hitting&sportId=1&season=${season}&limit=500&gameType=R${dateParam}${pool ? `&playerPool=${pool}` : ''}`;
 
     // The API doesn't accept comma-separated teamIds, so fire one request
     // per selected team in parallel, then merge the results.
