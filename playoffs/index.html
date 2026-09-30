@@ -856,10 +856,10 @@ async function fetchBatterStats(playerId) {
   try {
     const year = new Date().getFullYear();
     const [seasonData, careerData] = await Promise.all([
-      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=postSeason&group=hitting&season=${year}`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season&group=hitting&season=${year}&gameType=P`),
       fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=career&group=hitting&gameType=P`)
     ]);
-    const season = seasonData.stats?.find(s => s.type?.displayName === 'postSeason')?.splits?.[0]?.stat || {};
+    const season = seasonData.stats?.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
     const career = careerData.stats?.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat || {};
     const result = {
       sG:  season.gamesPlayed || 0, cG:  career.gamesPlayed || 0,
@@ -885,11 +885,11 @@ async function fetchPitcherStats(playerId) {
   if (playerStatsCache[key] !== undefined) return playerStatsCache[key];
   try {
     const [statsData, careerPStats, bioData] = await Promise.all([
-      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=postSeason&group=pitching&season=${new Date().getFullYear()}`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season&group=pitching&season=${new Date().getFullYear()}&gameType=P`),
       fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=career&group=pitching&gameType=P`),
       fetchWithFallback(`${MLB_API}/people/${playerId}`)
     ]);
-    const season = statsData.stats?.find(s => s.type?.displayName === 'postSeason')?.splits?.[0]?.stat || {};
+    const season = statsData.stats?.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
     const career = careerPStats.stats?.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat || {};
     const hand = bioData.people?.[0]?.pitchHand?.code || '';
     const result = {
@@ -926,7 +926,7 @@ async function fetchPlayerBio(playerId) {
   try {
     const year = new Date().getFullYear();
     const [gamesD, careerD, bioD, logD] = await Promise.all([
-      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=postSeason&group=hitting&season=${year}`),
+      fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=season&group=hitting&season=${year}&gameType=P`),
       fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=career&group=hitting&gameType=P`),
       fetchWithFallback(`${MLB_API}/people/${playerId}?fields=people,id,birthDate`),
       fetchWithFallback(`${MLB_API}/people/${playerId}/stats?stats=gameLog&group=hitting&season=${year}&gameType=P`)
@@ -934,7 +934,7 @@ async function fetchPlayerBio(playerId) {
     const person = bioD.people?.[0] || {};
     const dob = person.birthDate || null;
     const stats = gamesD.stats || [];
-    const season = stats.find(s => s.type?.displayName === 'postSeason')?.splits?.[0]?.stat || {};
+    const season = stats.find(s => s.type?.displayName === 'season')?.splits?.[0]?.stat || {};
     const career = (careerD.stats?.find(s => s.type?.displayName === 'career')?.splits?.[0]?.stat) || {};
     const gameSplits = (logD.stats?.[0]?.splits || []).slice().reverse();
     const lastHits = gameSplits.slice(0, 3).map(g => g.stat?.hits ?? '—');
